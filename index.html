@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Portfolio + OTP Login</title>
+<style>
+body{font-family:Arial,sans-serif;background:#121212;color:#fff;display:flex;justify-content:center;align-items:center;height:100vh;margin:0;}
+.container{background:#1e1e1e;padding:30px;border-radius:15px;text-align:center;width:300px;}
+input{width:90%;padding:10px;margin:10px 0;border-radius:10px;border:none;}
+button{padding:10px 20px;border-radius:10px;border:none;background:#00ff7f;cursor:pointer;}
+img.github-img{width:100px;height:100px;border-radius:50%;margin:10px;}
+#dashboard{display:none;}
+</style>
+</head>
+<body>
+
+<div class="container" id="login">
+  <h2>Login / Signup</h2>
+  <input type="email" id="email" placeholder="Enter your email" required>
+  <button id="sendOtp">Send OTP</button>
+
+  <div id="otpSection" style="display:none;">
+    <input type="text" id="otpInput" placeholder="Enter OTP">
+    <button id="verifyOtp">Verify OTP</button>
+  </div>
+
+  <p id="msg"></p>
+</div>
+
+<div class="container" id="dashboard">
+  <h2>Welcome to My Portfolio</h2>
+  <div id="githubImages"></div>
+</div>
+
+<script>
+const sendOtpBtn=document.getElementById("sendOtp");
+const verifyOtpBtn=document.getElementById("verifyOtp");
+const otpSection=document.getElementById("otpSection");
+const msg=document.getElementById("msg");
+const loginDiv=document.getElementById("login");
+const dashboardDiv=document.getElementById("dashboard");
+let generatedOtp="";
+
+sendOtpBtn.addEventListener("click", async ()=>{
+    const email=document.getElementById("email").value;
+    if(!email) return alert("Enter email");
+
+    generatedOtp=Math.floor(100000+Math.random()*900000).toString();
+
+    // Call local Node.js backend
+    try{
+        const res=await fetch("http://localhost:3001/send-otp",{
+            method:"POST",
+            headers:{"Content-Type":"application/json"},
+            body:JSON.stringify({email:email,otp:generatedOtp})
+        });
+        const data=await res.json();
+        if(data.success){
+            otpSection.style.display="block";
+            msg.textContent="OTP sent to your email!";
+        } else {
+            msg.textContent="Failed to send OTP";
+        }
+    }catch(err){
+        console.error(err);
+        msg.textContent="Error sending OTP";
+    }
+});
+
+verifyOtpBtn.addEventListener("click",()=>{
+    const otpInput=document.getElementById("otpInput").value;
+    if(otpInput===generatedOtp){
+        msg.textContent="OTP Verified! Loading Dashboard...";
+        setTimeout(()=>{
+            loginDiv.style.display="none";
+            dashboardDiv.style.display="block";
+            loadGitHubImages();
+        },1000);
+    } else {
+        msg.textContent="Incorrect OTP!";
+    }
+});
+
+function loadGitHubImages(){
+    const githubImages=["user1.png","user2.png"]; // GitHub repo images
+    const container=document.getElementById("githubImages");
+    githubImages.forEach(img=>{
+        const image=document.createElement("img");
+        image.src=`https://raw.githubusercontent.com/<your-username>/<repo>/main/${img}`;
+        image.classList.add("github-img");
+        container.appendChild(image);
+    });
+}
+</script>
+
+</body>
+</html>
